@@ -1,5 +1,3 @@
-#File: adf_deploy_sandbox/main_adf_dev.tf
-
 #terraform {
 #  backend "azurerm" {
 #    resource_group_name   = "<>"
