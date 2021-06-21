@@ -47,11 +47,18 @@ terraform {
 # Configure the Microsoft Azure Provider
 provider "azurerm" {
   features {}
-  subscription_id      = "37cec637-3adc-483c-b796-63d3760f6ead"
+  #subscription_id      = "37cec637-3adc-483c-b796-63d3760f6ead"
+  subscription_id		= "b54182d2-60c0-4e34-b1ab-499a3394771d"
+}
+
+resource "azurerm_resource_group" "resource-group-dev" {
+  name     = var.resource-group-dev
+  location = var.resource-location
 }
 
 resource "azurerm_storage_account" "adf_storage" {
-  name                     = "<>"
+  #name                     = "<>"
+  name					   = "adfstorageal"
   resource_group_name      = var.resource-group-dev
   location                 = var.resource-location
   account_tier             = "Standard"
@@ -76,14 +83,15 @@ resource "azurerm_storage_container" "adf_storage_target_01" {
 }
 
 resource "azurerm_data_factory" "adf_test" {
-  name                = "<>"
+  #name                = "<>"
+  name				  = "adftestal"
   resource_group_name = var.resource-group-dev
   location            = var.resource-location
 
   github_configuration {
     account_name    = "<>"
     branch_name     = "main"
-    git_url         = "https://github.com"
+    git_url         = "https://github.com/ladaGit"
     repository_name = "adf_deploy_sandbox"
     root_folder     = "/"
   }
@@ -120,4 +128,39 @@ resource "azurerm_data_factory_pipeline" "adf_pipeline_01" {
   name                = "adfpipeline01"
   resource_group_name = var.resource-group-dev
   data_factory_name   = azurerm_data_factory.adf_test.name
+
+activities_json = <<JSON
+[{
+    "name": "adfpipeline01",
+    "properties": {
+        "activities": [
+            {
+                "name": "adfpipeline01",
+                "type": "activity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": []
+            },
+            {
+                "name": "Wait1",
+                "type": "Wait",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "waitTimeInSeconds": 1
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2021-06-21T19:41:42Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}]
+JSON
 }
