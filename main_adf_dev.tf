@@ -462,6 +462,7 @@ resource "azurerm_data_factory_pipeline" "adf_pipeline_01" {
   resource_group_name = var.resource-group-dev
   data_factory_name   = azurerm_data_factory.adf_test.name
 
+/*
 activities_json = <<JSON
 [
   {
@@ -495,7 +496,97 @@ activities_json = <<JSON
   }
 ]
 JSON
+*/
+
+activities_json = <<JSON
+[
+            {
+                "name": "Copy_BlobToSqlServer",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "BlobSource",
+                        "recursive": true
+                    },
+                    "sink": {
+                        "type": "SqlServerSink",
+                        "tableOption": "autoCreate"
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "adfdsblob01",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "adfdssqlserver01",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+]
+JSON
 }
+
+resource "azurerm_data_factory_pipeline" "adf_pipeline_02" {
+  name                = "adfpipeline02"
+  resource_group_name = var.resource-group-dev
+  data_factory_name   = azurerm_data_factory.adf_test.name
+
+activities_json = <<JSON
+[
+  {
+                "name": "Copy_BlobToSqlServer",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlServerSource",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "BlobSink"
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "adfdssqlserver01",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "adfdsblob01",
+                        "type": "DatasetReference"
+                    }
+                ]
+            }
+]
+JSON
+}
+
 
 ###### Trigger Schedule #####
 resource "azurerm_data_factory_trigger_schedule" "adf_trigger_schedule" {
@@ -508,8 +599,9 @@ resource "azurerm_data_factory_trigger_schedule" "adf_trigger_schedule" {
   frequency = "Day"
 }
 
-/*
+
 ################################ ADF Dataflow ################################
+/*
 resource "azurerm_data_factory_dataflow" "adf_data_flow_01" {
   name                = "adfdataflow01"
   resource_group_name = var.resource-group-dev
@@ -531,5 +623,58 @@ activities_json = <<JSON
   }
 ]
 JSON
+}
+*/
+
+/*
+resource "azurerm_resource_group_template_deployment" "adf_arm_deployment" {
+  name                = "adfarmdeployment"
+  resource_group_name = var.resource-group-dev
+  deployment_mode     = "Complete"
+  
+  template_content = <<TEMPLATE
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "factoryName": {
+        "type": "string",
+        "metadata": "Data Factory name",
+        "defaultValue": "adftestal"
+    }
+  },
+
+  "resources": [
+    {
+          "name": "[concat(parameters('factoryName'), '/datasource')]",
+          "type": "Microsoft.DataFactory/factories/datasets",
+          "apiVersion": "2018-06-01",
+          "properties": {
+                "linkedServiceName": {
+                      "referenceName": "",
+                      "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                      
+                      "columnDelimiter": ",",
+                      "escapeChar": "\\",
+                      "firstRowAsHeader": true,
+                      "quoteChar": "\""
+                },
+                "schema": []
+          },
+          "dependsOn": []
+  }
+
+  ]
+}
+TEMPLATE
+
+  // NOTE: whilst we show an inline template here, we recommend
+  // sourcing this from a file for readability/editor support
 }
 */
